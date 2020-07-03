@@ -1,0 +1,7 @@
+/Notes.sublime-workspace
+/Notes_App.sublime-project
+/List.todo
+/__pycache__/
+*.pyc
+/sftp-config.json
+/venv/

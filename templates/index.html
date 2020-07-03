@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Notes</title>
+        <link href="{{url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/bootstrap-form-feedback.css')}}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/notes-style.css')}}" rel="stylesheet">
+        <script src="{{url_for('static', filename='js/jquery-3.3.1.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/imagesloaded.pkgd.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/infinite-scroll.pkgd.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/masonry.pkgd.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/MathJax.js')}}" async>
+            MathJax.Hub.Config({
+                config: ["MMLorHTML.js"],
+                extensions: ["MathMenu.js", "MathZoom.js"],
+                jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+                "HTML-CSS": { fonts: ["TeX"] }
+            });
+        </script>
+        <script>
+            $(document).ready(function()
+            {
+                // Layout
+                MathJax.Hub.Register.StartupHook("End", function()
+                {
+                    var grid = $(".grid").imagesLoaded( function()
+                    {
+                        grid.masonry({
+                            itemSelector: ".item",
+                        });
+
+                        var msnry = grid.data("masonry");
+                        layout = function() { msnry.layout() };
+
+                        grid.infiniteScroll({
+                            path: ".pagination__next",
+                            append: ".item",
+                            status: ".scroller-status",
+                            hideNav: ".pagination",
+                            outlayer: msnry,
+                        });
+
+                        grid.on("append.infiniteScroll", function(event, response, path)
+                        {
+                            MathJax.Hub.Queue(["Typeset", MathJax.Hub]);
+                            MathJax.Hub.Queue(layout);
+                        });
+                    });
+                });
+
+                // Dropdown menu
+                $(".dropdown-menu.keep-open").on("click", function (event) {
+                    event.stopPropagation();
+                });
+                $(window).on("click", function() {
+                    $(".dropdown-menu").slideUp();
+                });
+
+                // Search input
+                search_input = $("input[name='search']");
+                search_input.on("keydown", function(event) {
+                    if(event.keyCode == 13) {
+                        search_input.closest("form").submit();
+                    }
+                });
+                $(".btn-search").on("click", function() {
+                    search_input.closest("form").submit();
+                });
+                $(".btn-clear").on("click", function() {
+                    search_input.val("");
+                    /* Reset page */
+                    // search_input.closest("form").submit();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container content">
+
+            <div class="page-header">
+                <div class="form-inline pull-right">
+                    <div class="form-group has-feedback has-feedback-left" name="search">
+                        <form method="post" action="{{ url_for('index') }}">
+                            <i class="pointer glyphicon glyphicon-search form-control-feedback"></i>
+                            <input type="text" class="form-control" name="search" value="{{keywords}}" placeholder="Search...">
+                            <span class="btn-clear glyphicon glyphicon-remove-circle"></span>
+                        </form>
+                    </div>
+                    <div class="form-group">
+                        <div class="btn-group">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">&#9776</button>
+                            <div class="dropdown-menu dropdown-menu-right keep-open" style="width: 200px">
+                                <div class="dropdown-item">
+                                    <form method="get" action="{{ url_for ('new_note') }}">
+                                        <button class="btn btn-md btn-dropdown btn-text-left" style="width: 188px">
+                                            <span class="glyphicon glyphicon-plus text-left" style="width: 22px"></span> Add Note
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="dropdown-item">
+                                    <form method="get" action="{{ url_for('edit_categories') }}">
+                                        <button class="btn btn-md btn-dropdown btn-text-left" style="width: 188px">
+                                            <span class="glyphicon glyphicon-tags text-left" style="width: 22px"></span> Categories
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="dropdown-item divider" role="separator"></div>
+                                <div class="dropdown-item">
+                                    <form method="post" action="{{ url_for('index') }}">
+                                        {% for id, (name, selected) in categories.items() %}
+                                            <div class="form-check">
+                                                <label class="form-check-label" for="category:{{id}}"
+                                                 style="width: 190px">
+                                                    <span class="text-left" style="width: 22px">
+                                                        <input class="form-check-input" type="checkbox" name="category:{{id}}"
+                                                        id="category:{{id}}" {% if selected %} checked {% endif %}>
+                                                    </span>
+                                                    {{name}}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                        <div class="dropdown-item" style="margin-left: 20px">
+                                            <div class="btn-group">
+                                                <button class="btn btn-text-left btn-md" name="apply_filter"
+                                                 style="width: 75px; background-color: transparent">
+                                                    Apply
+                                                </button>
+                                                <button class="btn btn-text-right btn-md" name="clear_filter"
+                                                 style="width: 75px; background-color: transparent">
+                                                    Clear
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h1>
+                    <a class="navigation" href="{{ url_for ('index') }}">Notes</a>
+                </h1>
+            </div>
+
+            <div class="grid" data-target=".item" data-col-xs="12" data-col-sm="6" data-col-lg="4">
+                {% for note in notes %}
+                    {% include "note.html" %}
+                {% endfor %}
+            </div>
+
+            <div class="scroller-status">
+                <!-- <div class="infinite-scroll-request loader-ellips">...</div> -->
+                <p class="infinite-scroll-last"></p>
+                <!-- <p class="infinite-scroll-error">No more pages to load</p> -->
+            </div>
+
+            {% if page < pages %}
+            <p class="pagination">
+                <a class="pagination__next" href="{{ url_for ('index', page=page+1) }}">Next page</a>
+            </p>
+            {% endif %}
+
+        </div>
+    </body>
+</html>

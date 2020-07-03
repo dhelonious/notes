@@ -1,0 +1,11 @@
+beautifulsoup4==4.7.1
+Click==7.0
+Flask==1.0.2
+itsdangerous==1.1.0
+Jinja2==2.10
+Markdown==3.0.1
+MarkupSafe==1.1.1
+peewee==3.9.3
+python-markdown-math==0.6
+soupsieve==1.8
+Werkzeug==0.15.1

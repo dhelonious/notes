@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Edit Note</title>
+        <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/bootstrap-form-feedback.css')}}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/notes-style.css')}}" rel="stylesheet">
+        <style>
+            input { float: left; }
+            label { margin-left: 25px; display: block; }
+            textarea { resize: none; }
+            .resizable { resize: vertical; }
+        </style>
+        <script src="{{url_for('static', filename='js/jquery-3.3.1.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/MathJax.js')}}" async>
+            MathJax.Hub.Config({
+                config: ["MMLorHTML.js"],
+                extensions: ["MathMenu.js", "MathZoom.js"],
+                jax: ["input/TeX", "output/HTML-CSS", "output/NativeMML"],
+                "HTML-CSS": { fonts: ["TeX"] }
+            });
+        </script>
+        <script type=text/javascript>
+            $(function() {
+                $("#add_button").click(function() {
+                    $.ajax({
+                        url: "/add_categories",
+                        data: $("input[name = 'categories-input']").serialize(),
+                        type: "POST",
+                        success: function(response) {
+                            for(var key in response) {
+                                const checkbox = $("<input>", {
+                                    class: "form-check-input",
+                                    type: "checkbox",
+                                    name: "category:" + key,
+                                    checked: true,
+                                });
+                                const label = $("<label>", {
+                                    class: "form-check-label",
+                                    for: checkbox.prop("name"),
+                                    text: response[key],
+                                });
+                                $("#categories").append(
+                                    $("<div>", {class: "form-check"})
+                                        .append(checkbox, label));
+                            };
+                        },
+                        error: function(error) {
+                            console.log(error);
+                        }
+                    });
+                });
+                $("#preview_button").click(function() {
+                    $.ajax({
+                        url: "/get_note",
+                        data: $("#note_title, #note_content").serialize(),
+                        type: "POST",
+                        success: function(response) {
+                            const title = $("<div>", {
+                                class: "panel-heading",
+                            }).append($(response["title"]));
+                            const content = $("<div>", {
+                                class: "panel-body",
+                            }).append($(response["content"]));
+                            $("#preview").empty().append(
+                                $("<div>", {class: "panel panel-primary"})
+                                    .append(title, content))
+                            MathJax.Hub.Typeset();
+                        },
+                        error: function(error) {
+                            console.log(error);
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container content">
+
+            <div class="page-header">
+                <div class="form-inline pull-right">
+                    <div class="form-group">
+                        <form method="get" {% if new %} action="{{ url_for('delete_note', nid=note.id) }}" {% else %} action="{{ url_for('index') }}" {% endif %}>
+                            <button class="btn btn-primary btn-md">
+                                <span class="glyphicon glyphicon-arrow-left"></span> Cancel
+                            </button>
+                        </form>
+                    </div>
+                    {% if not new %}
+                        <div class="form-group">
+                            <form method="get" action="{{ url_for ('delete_note', nid=note.id) }}">
+                                <button class="btn btn-danger btn-md">
+                                    <span class="glyphicon glyphicon-remove"></span> Remove
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label class="btn btn-success pull-right" for="submit-form" tabindex="0">
+                            <span class="glyphicon glyphicon-save"></span> Save
+                        </label>
+                    </div>
+                </div>
+                <h1>Edit Note</h1>
+            </div>
+
+            <form method="post" action="{{ url_for ('save_note', nid=note.id) }}">
+                <input type="submit" id="submit-form" class="hidden"/>
+
+                <div class="form-group">
+                    <textarea class="form-control" name="note-title" id="note_title" rows="1" placeholder="Title">{{note.title}}</textarea>
+                    <textarea class="form-control resizable" name="note-content" id="note_content" rows="10" placeholder="Content">{{note.content}}</textarea>
+                </div>
+
+                <div class="form-group input-group">
+                    <div class="input-group-prepend">
+                        <button type="button" class="btn btn-primary" id="add_button">
+                            Add
+                        </button>
+                    </div>
+                    <input type="text" class="form-control" name="categories-input" placeholder="New category">
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-primary btn-md pull-right" id="preview_button">
+                            <span class="glyphicon glyphicon-search"></span> Preview
+                        </button>
+                    </div>
+                </div>
+
+                <label for="categories"><h4>Categories:</h4></label>
+                <div class="form-group" id="categories">
+                    {% for id, (name, selected) in categories.items() %}
+                        <div class="form-check">
+                            <label class="form-check-label" for="category:{{id}}">
+                                <input class="form-check-input" type="checkbox" name="category:{{id}}"
+                                 id="category:{{id}}" {% if selected %} checked {% endif %}>
+                                {{name}}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </form>
+
+            <div id="preview" data-col-xs="12" data-col-sm="6" data-col-lg="4" style="margin-top: 20px;">
+            </div>
+
+        </div>
+    </body>
+</html>

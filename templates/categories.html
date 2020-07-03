@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Categories</title>
+        <link href="{{ url_for('static', filename='css/bootstrap-checkbox-radio-list-group-item.min.css') }}" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{url_for('static', filename='css/notes-style.css')}}" rel="stylesheet">
+        <script src="{{url_for('static', filename='js/jquery-3.3.1.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/popper.min.js')}}"></script>
+        <script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
+        <script type=text/javascript>
+            $(function() {
+                $("#remove_button").click(function() {
+                    const inputs = document.getElementsByTagName("input");
+                    var categories = {};
+                    for(let input of inputs) {
+                        if(input.checked) {
+                            categories[input.name] = input;
+                        }
+                    };
+                    for(var key in categories) {
+                        element = categories[key].parentNode.parentNode;
+                        element.parentNode.removeChild(element);
+                        categories[key] = "";
+                    };
+                    $.ajax({
+                        url: "/delete_categories",
+                        data: categories,
+                        type: "POST",
+                        success: function(response) {
+                            if(response["status"] != "success") {
+                                console.log(response);
+                            }
+                        },
+                        error: function(error) {
+                            console.log(error);
+                        }
+                    });
+                });
+                // Category input
+                category_input = $("input[name='category-input']");
+                category_input.on("keydown", function(event) {
+                    if(event.keyCode == 13) {
+                        category_input.closest("form").submit();
+                    }
+                });
+                $(".btn-add").on("click", function() {
+                    category_input.closest("form").submit();
+                });
+                $(".btn-clear").on("click", function() {
+                    category_input.val("");
+                    category_input.closest("form").submit();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container content">
+
+            <div class="page-header">
+                <div class="form-inline pull-right">
+                    <div class="form-group">
+                        <form method="get" action="{{ url_for('index') }}">
+                            <button class="btn btn-primary btn-md">
+                                <span class="glyphicon glyphicon-arrow-left"></span> Back
+                            </button>
+                        </form>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-danger btn-md" id="remove_button">
+                            <span class="glyphicon glyphicon-remove"></span> Remove selected
+                        </button>
+                    </div>
+                </div>
+                <h1>Categories</h1>
+            </div>
+
+            <div class="list-group checkbox-list-group">
+                {% for category in categories %}
+                    <div class="list-group-item">&nbsp;
+                        <label>
+                            <input type="checkbox" name="category:{{category.id}}">
+                            <span class="list-group-item-text">
+                                {{ category.name }}
+                                <span class="badge badge-primary pull-right">{{ notes[category.name] }}</span>
+                            </span>
+                        </label>
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </body>
+</html>
